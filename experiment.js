@@ -1,5 +1,6 @@
 var deepcopy = require('deepcopy');
 var util = require('util');
+var defaults = require('lodash.defaults');
 
 var Experiment = module.exports;
 
@@ -29,6 +30,49 @@ var Experiment = module.exports;
 // TODO: the names really could use some reconsideration
 
 // TODO: we may be able to simplify significantly by using some curry
+
+// A utility for multiple personality functions
+var declareOptions = function(name, decl, func) {
+  defaults(decl, {
+    signatures: {},
+    upgrade: {},
+    require: []
+  });
+  return function() {
+    var options = null;
+    if (arguments.length === 1) {
+      var T = typeof arguments[0];
+      if (T === 'object') {
+        options = arguments[0];
+      } else {
+        var upgrade = decl.upgrade[T];
+        if (! upgrade)
+          throw new Error('invalid options object to ' + name);
+        options = {};
+        options[upgrade] = arguments[0];
+      }
+    } else {
+      for (var i=0, n=decl.signatures.length; i<n; i++) {
+        var sig = decl.signatures[i];
+        if (arguments.length === sig.length) {
+          options = {};
+          for (var j=0, m=sig.length; j<m; j++)
+            options[sig[j]] = arguments[j];
+          break;
+        }
+      }
+      if (! options)
+        throw new Error('invalid number of arguments to ' + name);
+    }
+    decl.require.forEach(function(opt) {
+      if (options[opt] === undefined)
+        throw new Error('missing ' + opt + ' option to ' + name);
+    });
+    if (decl.defaults)
+      defaults(options, decl.defaults);
+    return func(options);
+  };
+};
 
 // The outer layer is the spec -> cont functions:
 Experiment.cont = function(cont) { // outer unit

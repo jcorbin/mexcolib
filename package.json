@@ -6,6 +6,7 @@
   "repository": "http://github.com/jcorbin/mexcolib.git",
   "main": "experiment.js",
   "dependencies": {
-    "deepcopy": "~0.3.3"
+    "deepcopy": "~0.3.3",
+    "lodash.defaults": "~2.4.1"
   }
 }
