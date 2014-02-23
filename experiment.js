@@ -288,6 +288,16 @@ Experiment.each = declareOptions('each', {
       return r;
     };
   }
+  if (! singular) {
+    if (! plural) {
+      throw new Error('specify singular or plural to each');
+    }
+    var n = plural.length;
+    if (plural[n-1] !== 's') {
+      throw new Error('each unable to infer singular from plural');
+    }
+    singular = plural.slice(0, -1);
+  }
   return Experiment.wrap(function(exp, spec) {
     var items = getItems(spec);
     var i = 0;
