@@ -210,16 +210,22 @@ Experiment.copy = function(src, dst) {
   });
 };
 
-Experiment.choose = function(prop, lo, hi) {
-  if (hi === undefined) {
-    hi = lo;
-    lo = 0;
-  }
+Experiment.choose = declareOptions('choose', {
+  signatures: [
+    ['prop', 'hi'],
+    ['prop', 'lo', 'hi'],
+  ],
+  require: ['prop', 'hi'],
+  defaults: {lo: 0}
+}, function(options) {
+  var prop  = options.prop;
+  var lo    = options.lo;
+  var hi    = options.hi;
   var width = hi - lo;
   return Experiment.setup(function(spec) {
     spec[prop] = lo + Math.random() * width;
   });
-};
+});
 
 Experiment.timed = Experiment.wrap(function(exp, spec) {
   var cont = exp(spec);
