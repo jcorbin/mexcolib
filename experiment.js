@@ -384,6 +384,48 @@ Experiment.gen = declareOptions('gen', {
   });
 });
 
+// TODO: bilongs in ancillary generator tools module?
+function generatePerms(A) {
+  var n = A.length;
+  if (n === 1) {
+    var fired = false;
+    return function() {
+      if (fired) return;
+      fired = true;
+      return A;
+    };
+  } else {
+    var i = -1;
+    var next = null;
+    var self = function() {
+      if (! next) {
+        if (i >= n || ++i >= n) return;
+        next = generatePerms(A.slice(0, i).concat(A.slice(i+1)));
+      }
+      var p = next();
+      if (! p) {
+        next = null;
+        return self();
+      } else {
+        return [A[i]].concat(p);
+      }
+    };
+    return self;
+  }
+}
+
+Experiment.permute = declareOptions('permute', {
+  upgrade: {'string': 'name'},
+  require: ['name']
+}, function(options) {
+  var name = options.name;
+  return Experiment.gen(name, function(spec) {
+    if (! Array.isArray(spec[name]))
+      throw new Error('spec.' + name + ' not an array');
+    return generatePerms(spec[name]);
+  });
+});
+
 /* Stabilize a particular experiment metric.
  *
  * Takes an options argument; if a single string argument is given, it is
