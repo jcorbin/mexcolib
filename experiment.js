@@ -271,9 +271,10 @@ Experiment.each = declareOptions('each', {
 }, function(options) {
   var plural = options.plural;
   var singular = options.singular;
+  var items = options.items;
   var getItems;
-  if (typeof(plural) !== 'string') {
-    getItems = function() {return plural;};
+  if (items) {
+    getItems = function() {return items;};
   } else {
     getItems = function(spec) {
       var r = spec[plural];
