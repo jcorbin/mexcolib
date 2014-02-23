@@ -338,20 +338,17 @@ Experiment.gen = function(prop, gen, spec) {
  * The goal then is to obtain count results within tol*dev of the sample median
  * (a 6-deviation spread centered within the sample space).
  */
-Experiment.stabalize = function(options) {
-  if (typeof options === 'string') {
-    options = {prop: options};
-  } else if (! options) {
-    options = {};
+Experiment.stabalize = declareOptions('stabalize', {
+  upgrade: {'string': 'prop'},
+  require: ['prop'],
+  defaults: {
+    tolerance: 3,
+    count: 10
   }
-
-  if (! options.prop) {
-    throw new Error('no property given to stabalize');
-  }
-
+}, function(options) {
   var prop      = options.prop;
-  var tolerance = options.tolerance || 3;
-  var count     = options.count     || 10;
+  var tolerance = options.tolerance;
+  var count     = options.count;
   var augment   = !!options.augment;
 
   return Experiment.wrap(function(exp, spec) {
@@ -409,7 +406,7 @@ Experiment.stabalize = function(options) {
       it();
     };
   });
-};
+});
 
 // -- emission utilities (sinks)
 
