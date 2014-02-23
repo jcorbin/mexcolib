@@ -271,14 +271,18 @@ Experiment.each = declareOptions('each', {
 }, function(options) {
   var plural = options.plural;
   var singular = options.singular;
-  return Experiment.wrap(function(exp, spec) {
-    var items;
-    if (typeof(plural) === 'string') {
-      items = spec[plural];
+  var getItems;
+  if (typeof(plural) !== 'string') {
+    getItems = function() {return plural;};
+  } else {
+    getItems = function(spec) {
+      var r = spec[plural];
       delete spec[plural];
-    } else {
-      items = plural;
-    }
+      return r;
+    };
+  }
+  return Experiment.wrap(function(exp, spec) {
+    var items = getItems(spec);
     var i = 0;
     if (Array.isArray(items)) {
       return Experiment.expand(exp, spec, function(spec) {
