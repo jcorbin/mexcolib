@@ -325,7 +325,15 @@ Experiment.each = declareOptions('each', {
   });
 });
 
-Experiment.gen = function(prop, gen, spec) {
+Experiment.gen = declareOptions('gen', {
+  signatures: [
+    ['prop', 'gen']
+  ],
+  upgrade: {'function': 'gen'},
+  require: ['gen']
+}, function(options) {
+  var prop = options.prop;
+  var gen = options.gen;
   return Experiment.wrap(function(exp, spec) {
     var it = gen(spec, prop);
     return Experiment.expand(exp, spec, function(spec) {
@@ -336,7 +344,7 @@ Experiment.gen = function(prop, gen, spec) {
       }
     });
   });
-};
+});
 
 /* Stabilize a particular experiment metric.
  *
