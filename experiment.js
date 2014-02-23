@@ -26,13 +26,6 @@ var Experiment = module.exports;
  * used much (if at all).
  */
 
-// TODO: it's probably more useful to internalize the choice between expand and
-// expandSeries based on a single spec option rather than providing duplicate
-// combinators throughout; in other words:
-// - a particular experiment probably only wants to use only one family or the other
-// - that choice depends on the nature function being tested
-// - which isn't a direct concern of the setup structure necessarily
-
 // TODO: the names really could use some reconsideration
 
 // TODO: we may be able to simplify significantly by using some curry
@@ -148,33 +141,27 @@ Experiment.expand = function(expander) {
     var args = Array.prototype.slice.apply(arguments);
     return Experiment.wrap(function(exp, spec) {
       var expand = expander.apply(this, args.concat([spec]));
-      return function(emit) {
-        while (true) {
-          var newspec = deepcopy(spec);
-          if (! expand(newspec)) break;
-          exp(newspec)(emit);
-        }
-      };
-    });
-  };
-};
-
-Experiment.expandSeries = function(expander) {
-  return function() {
-    var args = Array.prototype.slice.apply(arguments);
-    return Experiment.wrap(function(exp, spec) {
-      var expand = expander.apply(this, args.concat([spec]));
-      return function(emit) {
-        var it = function() {
-          var newspec = deepcopy(spec);
-          if (! expand(newspec)) return;
-          exp(newspec)(function(result) {
-            emit(result);
-            setImmediate(it);
-          });
+      if (spec.parallelExpand) {
+        return function(emit) {
+          while (true) {
+            var newspec = deepcopy(spec);
+            if (! expand(newspec)) break;
+            exp(newspec)(emit);
+          }
         };
-        it();
-      };
+      } else {
+        return function(emit) {
+          var it = function() {
+            var newspec = deepcopy(spec);
+            if (! expand(newspec)) return;
+            exp(newspec)(function(result) {
+              emit(result);
+              setImmediate(it);
+            });
+          };
+          it();
+        };
+      }
     });
   };
 };
@@ -211,7 +198,7 @@ Experiment.timed = Experiment.wrap(function(exp, spec) {
 
 // TODO: provide an rusage monitor similar to timed
 
-var timesExpand = function(k, prop, spec) {
+Experiment.times = Experiment.expand(function(k, prop, spec) {
   if (arguments.length == 2) {
     spec = prop;
     prop = 'time';
@@ -223,12 +210,9 @@ var timesExpand = function(k, prop, spec) {
       return true;
     }
   };
-};
+});
 
-Experiment.times       = Experiment.expand(timesExpand);
-Experiment.serialTimes = Experiment.expandSeries(timesExpand);
-
-var eachExpand = function(plural, singular, spec) {
+Experiment.each = Experiment.expand(function(plural, singular, spec) {
   var items;
   if (typeof(plural) === 'string') {
     items = spec[plural];
@@ -258,12 +242,9 @@ var eachExpand = function(plural, singular, spec) {
       }
     };
   }
-};
+});
 
-Experiment.each       = Experiment.expand(eachExpand);
-Experiment.eachSeries = Experiment.expandSeries(eachExpand);
-
-var genExpand = function(prop, gen, spec) {
+Experiment.gen = Experiment.expand(function(prop, gen, spec) {
   var it = gen(spec, prop);
   return function(spec) {
     var val = it();
@@ -272,10 +253,7 @@ var genExpand = function(prop, gen, spec) {
       return true;
     }
   };
-};
-
-Experiment.gen       = Experiment.expand(genExpand);
-Experiment.genSeries = Experiment.expandSeries(genExpand);
+});
 
 /* Stabilize a particular experiment metric.
  *
@@ -413,14 +391,11 @@ if (require.main === module) {
 
   // Measures the difference between desired time to sleep and time slept by
   // picking a 3 random values < 100ms and sleeping for each value 10 times
-  //
-  // NOTE: the difference between using serialTimes and times below, in light
-  // of the TODO at top wrt expand core
   var sleepExp =
     Experiment.seq(
-      Experiment.serialTimes(3),
+      Experiment.times(3),
       Experiment.choose('delay', 100),
-      Experiment.serialTimes(10),
+      Experiment.times(10),
 
       // NOTE: not clear here, but Experiment.after executes in REVERSE order
       // under seq since it happens as the stack unwinds on the way out
@@ -443,9 +418,9 @@ if (require.main === module) {
   /* TODO: write a parsing layer which transforms the following into the above:
    *
    * [
-   *   {$serialTimes: 3},
+   *   {$times: 3},
    *   {$choose: ['delay', 100]},
-   *   {$serialTimes: 10},
+   *   {$times: 10},
    *   {$compute: function diff(delay, runtime) {
    *                return 1 - delay / (runtime / 1e6);
    *              }},
