@@ -276,6 +276,12 @@ Experiment.each = declareOptions('each', {
   if (items) {
     getItems = function() {return items;};
   } else {
+    if (! plural) {
+      if (! singular) {
+        throw new Error('specify singular or plural to each');
+      }
+      plural = singular + 's';
+    }
     getItems = function(spec) {
       var r = spec[plural];
       delete spec[plural];
