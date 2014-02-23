@@ -242,21 +242,26 @@ Experiment.timed = Experiment.wrap(function(exp, spec) {
 
 // TODO: provide an rusage monitor similar to timed
 
-Experiment.times = function(prop, k) {
-  if (arguments.length == 1) {
-    k = prop;
-    prop = 'time';
-  }
+Experiment.times = declareOptions('times', {
+  signatures: [
+    ['prop', 'count']
+  ],
+  upgrade: {'number': 'count'},
+  require: ['count'],
+  defaults: {prop: 'time'}
+}, function(options) {
+  var prop = options.prop;
+  var count = options.count;
   return Experiment.wrap(function(exp, spec) {
     var i = 0;
     return Experiment.expand(exp, spec, function(spec) {
-      if (i < k) {
+      if (i < count) {
         spec[prop] = i++;
         return true;
       }
     });
   });
-};
+});
 
 Experiment.each = function(plural, singular, spec) {
   return Experiment.wrap(function(exp, spec) {
