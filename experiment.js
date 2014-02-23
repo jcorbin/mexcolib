@@ -192,8 +192,9 @@ Experiment.timed = Experiment.wrap(function(exp, spec) {
 
 // TODO: provide an rusage monitor similar to timed
 
-Experiment.times = function(k, prop) {
+Experiment.times = function(prop, k) {
   if (arguments.length == 1) {
+    k = prop;
     prop = 'time';
   }
   return Experiment.wrap(function(exp, spec) {
