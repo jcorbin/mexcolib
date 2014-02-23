@@ -1,6 +1,6 @@
 {
   "name": "mexcolib",
-  "version": 0.25,
+  "version": "0.25.0",
   "description": "Monadic Experiment Combinator Library",
   "license": "BSD-3-Clause",
   "repository": "http://github.com/jcorbin/mexcolib.git",
