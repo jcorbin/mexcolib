@@ -1,0 +1,11 @@
+{
+  "name": "mexcolib",
+  "version": 0.25,
+  "description": "Monadic Experiment Combinator Library",
+  "license": "BSD-3-Clause",
+  "repository": "http://github.com/jcorbin/mexcolib.git",
+  "main": "experiment.js",
+  "dependencies": {
+    "deepcopy": "~0.3.3"
+  }
+}
