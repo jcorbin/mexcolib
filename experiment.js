@@ -334,6 +334,11 @@ Experiment.gen = declareOptions('gen', {
 }, function(options) {
   var prop = options.prop;
   var gen = options.gen;
+  if (! prop) {
+    if (! gen.name)
+      throw new Error('need to specify prop or name gen function');
+    prop = gen.name;
+  }
   return Experiment.wrap(function(exp, spec) {
     var it = gen(spec, prop);
     return Experiment.expand(exp, spec, function(spec) {
