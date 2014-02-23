@@ -440,7 +440,7 @@ if (require.main === module) {
     )
     ;
 
-  /* TODO: write a parsing layer * which * transforms the following into the above:
+  /* TODO: write a parsing layer which transforms the following into the above:
    *
    * [
    *   {$serialTimes: 3},
