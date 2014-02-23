@@ -136,34 +136,28 @@ Experiment.seq = function(f, g) {
 
 // And some applications
 
-Experiment.expand = function(expander) {
-  return function() {
-    var args = Array.prototype.slice.apply(arguments);
-    return Experiment.wrap(function(exp, spec) {
-      var expand = expander.apply(this, args.concat([spec]));
-      if (spec.parallelExpand) {
-        return function(emit) {
-          while (true) {
-            var newspec = deepcopy(spec);
-            if (! expand(newspec)) break;
-            exp(newspec)(emit);
-          }
-        };
-      } else {
-        return function(emit) {
-          var it = function() {
-            var newspec = deepcopy(spec);
-            if (! expand(newspec)) return;
-            exp(newspec)(function(result) {
-              emit(result);
-              setImmediate(it);
-            });
-          };
-          it();
-        };
+Experiment.expand = function(exp, spec, expand) {
+  if (spec.parallelExpand) {
+    return function(emit) {
+      while (true) {
+        var newspec = deepcopy(spec);
+        if (! expand(newspec)) break;
+        exp(newspec)(emit);
       }
-    });
-  };
+    };
+  } else {
+    return function(emit) {
+      var it = function() {
+        var newspec = deepcopy(spec);
+        if (! expand(newspec)) return;
+        exp(newspec)(function(result) {
+          emit(result);
+          setImmediate(it);
+        });
+      };
+      it();
+    };
+  }
 };
 
 Experiment.copy = function(src, dst) {
@@ -198,62 +192,68 @@ Experiment.timed = Experiment.wrap(function(exp, spec) {
 
 // TODO: provide an rusage monitor similar to timed
 
-Experiment.times = Experiment.expand(function(k, prop, spec) {
+Experiment.times = function(k, prop) {
   if (arguments.length == 2) {
     spec = prop;
     prop = 'time';
   }
-  var i = 0;
-  return function(spec) {
-    if (i < k) {
-      spec[prop] = i++;
-      return true;
-    }
-  };
-});
-
-Experiment.each = Experiment.expand(function(plural, singular, spec) {
-  var items;
-  if (typeof(plural) === 'string') {
-    items = spec[plural];
-    delete spec[plural];
-  } else {
-    items = plural;
-  }
-  var i = 0;
-  if (Array.isArray(items)) {
-    return function(spec) {
-      if (i < items.length) {
-        spec[singular] = items[i++];
+  return Experiment.wrap(function(exp, spec) {
+    var i = 0;
+    return Experiment.expand(exp, spec, function(spec) {
+      if (i < k) {
+        spec[prop] = i++;
         return true;
       }
-    };
-  } else {
-    items = Object
-      .keys(items)
-      .sort()
-      .map(function(name) {return [name, items[name]];});
-    return function(spec) {
-      if (i < items.length) {
-        var item = items[i++];
-        spec[singular + '_name'] = item[0];
-        spec[singular          ] = item[1];
+    });
+  });
+};
+
+Experiment.each = function(plural, singular, spec) {
+  return Experiment.wrap(function(exp, spec) {
+    var items;
+    if (typeof(plural) === 'string') {
+      items = spec[plural];
+      delete spec[plural];
+    } else {
+      items = plural;
+    }
+    var i = 0;
+    if (Array.isArray(items)) {
+      return Experiment.expand(exp, spec, function(spec) {
+        if (i < items.length) {
+          spec[singular] = items[i++];
+          return true;
+        }
+      });
+    } else {
+      items = Object
+        .keys(items)
+        .sort()
+        .map(function(name) {return [name, items[name]];});
+      return Experiment.expand(exp, spec, function(spec) {
+        if (i < items.length) {
+          var item = items[i++];
+          spec[singular + '_name'] = item[0];
+          spec[singular          ] = item[1];
+          return true;
+        }
+      });
+    }
+  });
+};
+
+Experiment.gen = function(prop, gen, spec) {
+  return Experiment.wrap(function(exp, spec) {
+    var it = gen(spec, prop);
+    return Experiment.expand(exp, spec, function(spec) {
+      var val = it();
+      if (val !== null && val !== undefined) {
+        spec[prop] = val;
         return true;
       }
-    };
-  }
-});
-
-Experiment.gen = Experiment.expand(function(prop, gen, spec) {
-  var it = gen(spec, prop);
-  return function(spec) {
-    var val = it();
-    if (val !== null && val !== undefined) {
-      spec[prop] = val;
-      return true;
-    }
-  };
-});
+    });
+  });
+};
 
 /* Stabilize a particular experiment metric.
  *
