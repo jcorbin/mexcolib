@@ -324,8 +324,8 @@ Experiment.stabalize = function(options) {
             var desc = {sample: sample};
             desc.med = ile(0.50);
             desc.dev = (ile(0.75) - ile(0.25)) / 2;
-            desc.hi  = desc.med + maxDev * desc.dev;
-            desc.lo  = Math.max(0, desc.med - maxDev * desc.dev);
+            desc.hi  = desc.med + tolerance * desc.dev;
+            desc.lo  = Math.max(0, desc.med - tolerance * desc.dev);
 
             var i=null, j=null;
             sample.forEach(function(result, k) {
