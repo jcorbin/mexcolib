@@ -227,6 +227,39 @@ Experiment.choose = declareOptions('choose', {
   });
 });
 
+Experiment.counted = declareOptions('counted', {
+  signatures: [
+    ['dest', 'func']
+  ],
+  upgrade: {
+    'function': 'func',
+    'string': 'name'
+  }
+}, function(options) {
+  var dest = options.dest;
+  var func = options.func;
+  var name = options.name;
+  if (! name) {
+    if (! func) throw new Error('specify func or name to counted');
+    if (! func.name) throw new Error('specify name or name your func to counted');
+    name = func.name;
+  }
+  if (! dest) dest = name + 's';
+  return Experiment.setup(function(spec) {
+    var f = func;
+    if (! f) {
+      f = spec[name];
+      if (! f) throw new Error('missing spec.' + name);
+      if (typeof f !== 'function') throw new Error('spec.' + name + ' not a function');
+    }
+    spec[dest] = 0;
+    spec[name] = function() {
+      spec[dest]++;
+      return f.apply(this, arguments);
+    };
+  });
+});
+
 Experiment.timed = Experiment.wrap(function(exp, spec) {
   var cont = exp(spec);
   return function(emit) {
