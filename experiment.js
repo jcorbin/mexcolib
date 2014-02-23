@@ -263,7 +263,14 @@ Experiment.times = declareOptions('times', {
   });
 });
 
-Experiment.each = function(plural, singular, spec) {
+Experiment.each = declareOptions('each', {
+  signatures: [
+    ['plural', 'singular']
+  ],
+  upgrade: {'string': 'plural'}
+}, function(options) {
+  var plural = options.plural;
+  var singular = options.singular;
   return Experiment.wrap(function(exp, spec) {
     var items;
     if (typeof(plural) === 'string') {
@@ -295,7 +302,7 @@ Experiment.each = function(plural, singular, spec) {
       });
     }
   });
-};
+});
 
 Experiment.gen = function(prop, gen, spec) {
   return Experiment.wrap(function(exp, spec) {
