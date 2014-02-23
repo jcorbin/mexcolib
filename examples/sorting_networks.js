@@ -19,6 +19,7 @@ Experiment.run(
     Experiment.counted('swap'),
 
     Experiment.compute(function valid(output, rel) {
+      // FIXME: this inflates the rels count by N
       for (var i=0, n=output.length-1; i<n; i++)
         if (! rel(output[i], output[i+1]))
           return false;
