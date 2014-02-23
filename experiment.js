@@ -393,7 +393,7 @@ if (require.main === module) {
   // picking a 3 random values < 100ms and sleeping for each value 10 times
   var sleepExp =
     Experiment.seq(
-      Experiment.times(3),
+      Experiment.times('delayChoice', 3),
       Experiment.choose('delay', 100),
       Experiment.times(10),
 
